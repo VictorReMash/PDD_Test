@@ -4,6 +4,7 @@ from app.database import async_session, engine
 from app import crud, models
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi import Request
 from contextlib import asynccontextmanager
 
@@ -13,7 +14,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Новый способ обработки событий жизненного цикла через lifespan
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     # Инициализация базы данных при старте
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
@@ -27,6 +28,9 @@ async def lifespan(app: FastAPI):
 
 # Инициализируем приложение с lifespan
 app = FastAPI(lifespan=lifespan)
+
+# Подключаем директорию для статических файлов
+app.mount("/images", StaticFiles(directory="app/images"), name="images")
 
 
 # Получение зависимостей для сессии базы данных
@@ -59,8 +63,23 @@ async def get_question(
 @app.post("/question/")
 async def create_question(
     question_text: str,
-    chapter: str,
+    chapter_id: int,
     image_url: str = None,
     db: AsyncSession = Depends(get_db),
 ):
-    return await crud.create_question(db, question_text, chapter, image_url)
+    return await crud.create_question(db, question_text, chapter_id, image_url)
+
+
+import os
+
+
+@app.get("/images")
+async def list_images():
+    files = os.listdir("app/images")
+    return {"images": files}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

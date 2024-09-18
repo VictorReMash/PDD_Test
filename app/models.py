@@ -30,4 +30,3 @@ class Answers(Base):
     answer_text = Column(String(255), nullable=False)
     correct_answer = Column(Boolean, default=False)
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
-проект

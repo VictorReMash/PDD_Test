@@ -1,27 +1,45 @@
-import mysql.connector
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select
+from app.database import DATABASE_URL
+from app.models import Answers
+from models import Question  # Предположим, что модель Question уже определена
 
-# Настройки подключения к базе данных
-db_config = {
-    "user": "usertest",
-    "password": "4MDI8c81",
-    "host": "localhost",
-    "database": "test_form",
-}
-# Подключаемся к базе данных
-conn = mysql.connector.connect(**db_config)
-cursor = conn.cursor()
+# Создание асинхронного движка
+engine = create_async_engine(DATABASE_URL, echo=True)
 
-# Выполняем запрос к базе данных
-query = "SELECT id, name FROM chapters where id = 2"
-cursor.execute(query)
+# Создание сессии
+SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
-# Получаем все строки результата
-rows = cursor.fetchall()
 
-# Выводим данные
-for row in rows:
-    print(*row)
+# Асинхронная функция для получения вопроса
+async def get_question(db: AsyncSession, question_id: int):
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    return result.scalar_one_or_none()
 
-# Закрываем курсор и соединение
-cursor.close()
-conn.close()
+
+# Асинхронная функция для получения ответов на вопрос
+async def get_answer(db: AsyncSession, question_id: int):
+    result = await db.execute(select(Answers).where(Answers.question_id == question_id))
+    return result.scalar_one_or_none()
+
+
+# Тестовая функция с параметром question_id
+async def test_get_question(question_id: int):
+    # Создаём сессию для работы с базой данных
+    async with SessionLocal() as session:
+        question = await get_question(session, question_id)
+
+        # Выводим результат
+        if question:
+            print(f"Question ID: {question.id}, Text: {question.question_text}")
+        else:
+            print("Question not found.")
+
+
+# Запуск в блоке if __name__ == '__main__'
+if __name__ == "__main__":
+    # Передача question_id в качестве аргумента
+    question_id = 1  # Укажи тестовый ID вопроса
+    asyncio.run(test_get_question(question_id))
