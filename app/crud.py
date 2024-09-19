@@ -1,6 +1,7 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Question
+from app.utils import shuffle_questions
 
 
 # Получить вопрос по ID
@@ -28,3 +29,9 @@ async def create_question(
 async def get_questions(db: AsyncSession):
     result = await db.execute(select(Question))
     return result.scalars().all()
+
+
+# Получение первого вопроса из базы
+async def get_first_question(db: AsyncSession):
+    result = await db.execute(select(Question).order_by(Question.id.asc()).limit(1))
+    return result.scalar_one_or_none()
