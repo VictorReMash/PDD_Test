@@ -45,9 +45,6 @@ app.mount("/images", StaticFiles(directory=images_dir), name="images")
 static_dir = os.path.join(current_dir, "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# # Подключаем директорию для статических файлов
-# app.mount("/images", StaticFiles(directory="app/images"), name="images")
-
 
 # Получение зависимостей для сессии базы данных
 async def get_db():
@@ -61,24 +58,6 @@ async def get_homepage(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-# Маршрут для получения вопроса по ID
-# @app.get("/demo/{question_id}", response_class=HTMLResponse)
-# async def get_question(
-#     request: Request, question_id: int, db: AsyncSession = Depends(get_db)
-# ):
-#     question = await crud.get_question(db, question_id)
-#     if not question:
-#         raise HTTPException(status_code=404, detail="Вопрос не найден")
-#
-#     return templates.TemplateResponse(
-#         "demo.html",
-#         {
-#             "question_text": question.question_text,
-#             "request": request,
-#             "image_url": question.image_url,
-#             "chapter_id": question.chapter_id,
-#         },
-#     )
 @app.get("/demo", response_class=HTMLResponse)
 async def get_demo_page(request: Request, db: AsyncSession = Depends(get_db)):
     # Получаем первый вопрос из базы данных
