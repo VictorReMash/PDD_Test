@@ -6,24 +6,51 @@
     <title>Тест</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <script>
+        async function fetchQuestion(questionId) {
+            const response = await fetch(`/api/question/${questionId}`);
+            const data = await response.json();
+
+            // Проверяем, есть ли ошибка
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Обновляем содержимое вопроса на странице
+            const imageElement = document.querySelector('.test__image');
+            const questionElement = document.querySelector('.test__question');
+            const optionInput = document.querySelector('.test__input');
+            const optionLabel = document.querySelector('.test__label');
+
+            imageElement.src = data.image_url;  // Устанавливаем новый URL изображения
+            questionElement.textContent = data.question_text;  // Устанавливаем текст вопроса
+            optionInput.value = data.chapter_id;  // Устанавливаем значение радиокнопки
+            optionLabel.textContent = data.chapter_id;  // Устанавливаем текст метки радиокнопки
+        }
+    </script>
 </head>
 <body>
-    <!-- Блок с кнопками -->
-    <div class="d-flex flex-wrap justify-content-between">
-        {% for i in range(1, 21) %}
-            <button type="button" class="btn btn-primary m-1">{{ i }}</button>
-        {% endfor %}
-    </div>
-    <div class="test">
-        <img src="{{ image_url }}" alt="Вопрос" class="test__image">
-        <h3 class="test__question">{{ question_text }}</h3>
-        <form class="test__form">
-            <div class="test__option">
-                <input class="test__input" type="radio" name="chapter_id" value="1">
-                <label class="test__label">{{ chapter_id }}</label>
-            </div>
-            <button type="submit" class="test__button">Ответить</button>
-        </form>
+    <div class="container text-center mt-5">
+        <h1>Выберите вопрос</h1>
+        <!-- Блок с кнопками -->
+        <div class="d-flex flex-wrap justify-content-between">
+            {% for question in questions %}
+                <button class="btn btn-primary m-1" onclick="fetchQuestion({{ question.id }})">{{ question.id }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="test mt-4">
+            <img src="{{ image_url }}" alt="Вопрос" class="test__image" />
+            <h3 class="test__question">{{ question_text }}</h3>
+            <form class="test__form">
+                <div class="test__option">
+                    <input class="test__input" type="radio" name="chapter_id" value="{{ chapter_id }}">
+                    <label class="test__label">{{ chapter_id }}</label>
+                </div>
+                <button type="submit" class="test__button">Ответить</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

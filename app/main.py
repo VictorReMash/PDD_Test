@@ -1,13 +1,15 @@
-from tempfile import template
-
-from fastapi import FastAPI, Depends, HTTPException  # Импортируем необходимые классы
+from fastapi import (
+    FastAPI,
+    Depends,
+    HTTPException,
+    Request,
+)  # Импортируем необходимые классы
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import async_session, engine
 from app import crud, models
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi import Request
 from contextlib import asynccontextmanager
 import os
 
@@ -52,30 +54,58 @@ async def get_db():
         yield session
 
 
-# Главная страница с кнопкой "Демо"
+# Главная страница с кнопками "Демо"
 @app.get("/", response_class=HTMLResponse)
-async def get_homepage(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def get_homepage(request: Request, db: AsyncSession = Depends(get_db)):
+    # Получаем все вопросы из базы данных для отображения в виде кнопок
+    questions = await crud.get_all_questions(db)
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "questions": questions,
+        },  # Передаем список вопросов в шаблон
+    )
 
 
+# Страница демо с вопросами
 @app.get("/demo", response_class=HTMLResponse)
 async def get_demo_page(request: Request, db: AsyncSession = Depends(get_db)):
-    # Получаем первый вопрос из базы данных
-    question = await crud.get_first_question(
-        db
-    )  # Делаем отдельную функцию для получения первого вопроса
-    if not question:
-        raise HTTPException(status_code=404, detail="Вопрос не найден")
+    # Получаем все вопросы из базы данных
+    questions = await crud.get_all_questions(db)
+
+    if not questions:
+        raise HTTPException(status_code=404, detail="Вопросы не найдены")
+
+    # Выбираем первый вопрос для отображения
+    question = questions[0]  # Выбираем первый вопрос (можно изменить логику)
 
     return templates.TemplateResponse(
         "demo.html",
         {
             "request": request,
+            "questions": questions,  # Передаем список вопросов в шаблон
             "question_text": question.question_text,
             "image_url": question.image_url,
             "chapter_id": question.chapter_id,
         },
     )
+
+
+# Маршрут для получения информации о вопросе через AJAX
+@app.get("/api/question/{question_id}")
+async def get_question_api(question_id: int, db: AsyncSession = Depends(get_db)):
+    question = await crud.get_question(db, question_id)
+    if not question:
+        return {"error": "Вопрос не найден"}
+
+    # Возвращаем данные вопроса в формате JSON
+    return {
+        "question_text": question.question_text,
+        "image_url": question.image_url,
+        "chapter_id": question.chapter_id,
+    }
 
 
 # Добавление нового вопроса (для примера)
