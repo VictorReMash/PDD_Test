@@ -46,13 +46,6 @@
     <div class="container text-center mt-5">
         <h1>Выберите вопрос</h1>
 
-         <!-- Блок с кнопками -->
-<!--        <div class="d-flex flex-wrap justify-content-between">-->
-<!--            {% for question in questions %}-->
-<!--                <button class="btn btn-primary m-1" onclick="fetchQuestion({{ question.id }})">{{ question.id }}</button>-->
-<!--            {% endfor %}-->
-<!--        </div>-->
-
         <div class="d-flex flex-wrap justify-content-between">
             {% for i in range(1, num_buttons + 1) %}
                 <button class="btn btn-primary m-1" data-question-id="{{ questions[i-1].id }}">
