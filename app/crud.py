@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models import Question
+from app.utils import demolist
 
 
 # Получение первого вопроса из базы данных
@@ -11,8 +12,8 @@ async def get_first_question(db: AsyncSession):
 
 # Получение всех вопросов из базы данных
 async def get_all_questions(db: AsyncSession):
-    result = await db.execute(select(Question).order_by(Question.id.asc()))
-    return result.scalars().all()  # Возвращаем все вопросы как список
+    result = await db.execute(select(Question).order_by(Question.id.in_(demolist)))
+    return result.scalars().all()
 
 
 # Получение вопроса по ID

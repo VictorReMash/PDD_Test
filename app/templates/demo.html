@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script>
+        // Функция для запроса вопроса
         async function fetchQuestion(questionId) {
             const response = await fetch(`/api/question/${questionId}`);
             const data = await response.json();
@@ -28,15 +29,35 @@
             optionInput.value = data.chapter_id;  // Устанавливаем значение радиокнопки
             optionLabel.textContent = data.chapter_id;  // Устанавливаем текст метки радиокнопки
         }
+
+        // Добавление обработчиков событий на кнопки
+        window.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('button[data-question-id]');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const questionId = button.getAttribute('data-question-id');
+                    fetchQuestion(questionId);
+                });
+            });
+        });
     </script>
 </head>
 <body>
     <div class="container text-center mt-5">
         <h1>Выберите вопрос</h1>
-        <!-- Блок с кнопками -->
+
+         <!-- Блок с кнопками -->
+<!--        <div class="d-flex flex-wrap justify-content-between">-->
+<!--            {% for question in questions %}-->
+<!--                <button class="btn btn-primary m-1" onclick="fetchQuestion({{ question.id }})">{{ question.id }}</button>-->
+<!--            {% endfor %}-->
+<!--        </div>-->
+
         <div class="d-flex flex-wrap justify-content-between">
-            {% for question in questions %}
-                <button class="btn btn-primary m-1" onclick="fetchQuestion({{ question.id }})">{{ question.id }}</button>
+            {% for i in range(1, num_buttons + 1) %}
+                <button class="btn btn-primary m-1" data-question-id="{{ questions[i-1].id }}">
+                    {{ i }}
+                </button>
             {% endfor %}
         </div>
 

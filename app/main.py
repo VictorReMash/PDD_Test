@@ -5,6 +5,7 @@ from fastapi import (
     Request,
 )  # Импортируем необходимые классы
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.utils import shuffle_questions
 from app.database import async_session, engine
 from app import crud, models
 from fastapi.responses import HTMLResponse
@@ -59,7 +60,6 @@ async def get_db():
 async def get_homepage(request: Request, db: AsyncSession = Depends(get_db)):
     # Получаем все вопросы из базы данных для отображения в виде кнопок
     questions = await crud.get_all_questions(db)
-
     return templates.TemplateResponse(
         "index.html",
         {
@@ -78,6 +78,12 @@ async def get_demo_page(request: Request, db: AsyncSession = Depends(get_db)):
     if not questions:
         raise HTTPException(status_code=404, detail="Вопросы не найдены")
 
+    # Перемешиваем вопросы каждый раз, при обновлении страницы
+    shuffle_questions(questions)
+
+    # Устанавливаем количество кнопок как длину списка вопросов
+    num_buttons = len(questions)
+
     # Выбираем первый вопрос для отображения
     question = questions[0]  # Выбираем первый вопрос (можно изменить логику)
 
@@ -89,6 +95,7 @@ async def get_demo_page(request: Request, db: AsyncSession = Depends(get_db)):
             "question_text": question.question_text,
             "image_url": question.image_url,
             "chapter_id": question.chapter_id,
+            "num_buttons": num_buttons,  # Передаем количество для генерации кнопок с вопросами
         },
     )
 
