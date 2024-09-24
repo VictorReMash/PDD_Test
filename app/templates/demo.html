@@ -22,7 +22,7 @@
         <div class="test mt-4">
             <img src="{{ image_url }}" alt="Вопрос" class="test__image" />
             <h3 class="test__question">{{ question_text }}</h3>
-            <form class="test__form">
+            <form class="test__form" onsubmit="handleAnswerSubmit(event)">
                 <div class="test__option">
                     <input class="test__input" type="radio" name="chapter_id" value="{{ chapter_id }}">
                     <label class="test__label">{{ chapter_id }}</label>
@@ -31,6 +31,7 @@
             </form>
         </div>
     </div>
+
     <!-- Подключаем внешний JavaScript файл -->
     <script src="/static/js/script.js"></script>
 </body>
