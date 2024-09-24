@@ -12,7 +12,7 @@ async def get_first_question(db: AsyncSession):
 
 # Получение всех вопросов из базы данных
 async def get_all_questions(db: AsyncSession):
-    result = await db.execute(select(Question).order_by(Question.id.in_(demolist)))
+    result = await db.execute(select(Question).filter(Question.id.in_(demolist)))
     return result.scalars().all()
 
 
