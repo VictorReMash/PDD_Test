@@ -3,6 +3,9 @@ from fastapi import (
     Depends,
     HTTPException,
     Request,
+    Response,
+    Query,
+    Cookie,
 )  # Импортируем необходимые классы
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.utils import shuffle_questions
@@ -13,6 +16,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
+import random
+import json
 
 
 # Определяем текущую директорию
@@ -71,34 +76,50 @@ async def get_homepage(request: Request, db: AsyncSession = Depends(get_db)):
 
 # Страница демо с вопросами
 @app.get("/demo", response_class=HTMLResponse)
-async def get_demo_page(request: Request, db: AsyncSession = Depends(get_db)):
+async def get_demo_page(
+        request: Request,
+        response: Response,
+        question_id: int = Query(default=None),  # Получаем вопрос по ID, если передан
+        shuffled_questions: str = Cookie(default=None),  # Получаем перемешанные вопросы из куки
+        db: AsyncSession = Depends(get_db),
+):
     # Получаем все вопросы из базы данных
     questions = await crud.get_all_questions(db)
 
     if not questions:
         raise HTTPException(status_code=404, detail="Вопросы не найдены")
 
-    # Перемешиваем вопросы каждый раз, при обновлении страницы
-    shuffle_questions(questions)
+    # Если перемешанные вопросы еще не сохранены в куки, перемешиваем и сохраняем
+    if shuffled_questions is None:
+        random.shuffle(questions)  # Перемешиваем вопросы
+        # Сохраняем перемешанные вопросы в куки
+        response.set_cookie(key="shuffled_questions", value=json.dumps([q.id for q in questions]))
+        shuffled_questions = json.dumps([q.id for q in questions])  # Присваиваем перемешанные вопросы переменной
 
-    # Устанавливаем количество кнопок как длину списка вопросов
-    num_buttons = len(questions)
+    # Загружаем перемешанные вопросы
+    shuffled_question_ids = json.loads(shuffled_questions)
 
-    # Выбираем первый вопрос для отображения
-    question = questions[0]  # Выбираем первый вопрос (можно изменить логику)
+    # Если передан ID вопроса, находим его
+    if question_id:
+        question = await crud.get_question(db, question_id)
+        if not question:
+            raise HTTPException(status_code=404, detail="Вопрос не найден")
+    else:
+        # Если ID не передан, показываем первый вопрос из перемешанного списка
+        first_question_id = shuffled_question_ids[0]
+        question = await crud.get_question(db, first_question_id)
 
     return templates.TemplateResponse(
         "demo.html",
         {
             "request": request,
-            "questions": questions,  # Передаем список вопросов в шаблон
+            "questions": questions,  # Все вопросы передаем для кнопок
             "question_text": question.question_text,
             "image_url": question.image_url,
             "chapter_id": question.chapter_id,
-            "num_buttons": num_buttons,  # Передаем количество для генерации кнопок с вопросами
+            "num_buttons": len(questions),  # Количество кнопок
         },
     )
-
 
 # Маршрут для получения информации о вопросе через AJAX
 @app.get("/api/question/{question_id}")

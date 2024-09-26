@@ -11,40 +11,28 @@
     <div class="container text-center mt-5">
         <h1>Выберите вопрос</h1>
 
-        <!-- Кнопки для выбора вопросов -->
         <div class="d-flex flex-wrap justify-content-between">
             {% for i in range(1, num_buttons + 1) %}
-                <button class="btn btn-primary m-1 question-button" data-question-id="{{ questions[i-1].id }}">
+                <button class="btn btn-primary m-1" data-question-id="{{ questions[i-1].id }}">
                     {{ i }}
                 </button>
             {% endfor %}
         </div>
 
-        <!-- Отображение вопроса и формы для ответа -->
         <div class="test mt-4">
             <img src="{{ image_url }}" alt="Вопрос" class="test__image" />
             <h3 class="test__question">{{ question_text }}</h3>
-            <form class="test__form" method="POST" action="/answer">
+            <form class="test__form" onsubmit="handleAnswerSubmit(event)">
                 <div class="test__option">
-                    <input class="test__input" type="radio" name="answer" value="{{ chapter_id }}">
+                    <input class="test__input" type="radio" name="chapter_id" value="{{ chapter_id }}">
                     <label class="test__label">{{ chapter_id }}</label>
                 </div>
-                <button type="submit" class="test__button btn btn-success mt-3">Ответить</button>
+                <button type="submit" class="test__button">Ответить</button>
             </form>
         </div>
     </div>
 
     <!-- Подключаем внешний JavaScript файл -->
-    <script>
-        // Обработка кликов по кнопкам вопросов
-        document.querySelectorAll('.question-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const questionId = button.getAttribute('data-question-id');
-
-                // Перенаправление на API для загрузки вопроса по его ID
-                window.location.href = `/demo?question_id=${questionId}`;
-            });
-        });
-    </script>
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
