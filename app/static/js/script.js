@@ -1,6 +1,7 @@
 let currentQuestionIndex = 0; // Индекс текущего вопроса
 const buttons = document.querySelectorAll('button[data-question-id]'); // Получаем все кнопки
 const totalQuestions = buttons.length; // Общее количество вопросов
+let answeredQuestions = new Set(); // Множество отвеченных вопросов
 
 // Функция для получения вопроса по ID
 async function fetchQuestion(questionId) {
@@ -31,9 +32,18 @@ async function fetchQuestion(questionId) {
     optionLabel.textContent = data.chapter_id;  // Устанавливаем текст метки радиокнопки
 }
 
+// Функция для получения следующего неотвеченного вопроса
+function getNextUnansweredQuestion() {
+    for (let i = currentQuestionIndex + 1; i < totalQuestions; i++) {
+        if (!answeredQuestions.has(i)) {
+            return i;
+        }
+    }
+    return -1; // Если все вопросы отвечены
+}
+
 // Обработчик события для кнопки "Ответить"
 async function handleAnswerSubmit(event) {
-    console.log('Вызов 1', currentQuestionIndex); // Лог текущего индекса
     event.preventDefault(); // Предотвращаем отправку формы
 
     const answerValue = document.querySelector('input[name="chapter_id"]:checked')?.value;
@@ -43,31 +53,32 @@ async function handleAnswerSubmit(event) {
         return;
     }
 
-    // Переходим к следующему вопросу
-    currentQuestionIndex += 1;
-    console.log('После увеличения', currentQuestionIndex); // Лог после увеличения индекса
+    // Добавляем текущий вопрос в множество отвеченных
+    answeredQuestions.add(currentQuestionIndex);
 
-    if (currentQuestionIndex < totalQuestions) {
-        console.log('Вызов 2', currentQuestionIndex);
+    // Переходим к следующему неотвеченному вопросу
+    const nextQuestionIndex = getNextUnansweredQuestion();
+
+    if (nextQuestionIndex !== -1) {
+        currentQuestionIndex = nextQuestionIndex; // Обновляем индекс следующего вопроса
         const nextButton = buttons[currentQuestionIndex]; // Получаем следующую кнопку
         const nextQuestionId = nextButton.getAttribute('data-question-id'); // Получаем ID следующего вопроса
         fetchQuestion(nextQuestionId); // Загружаем следующий вопрос
-        console.log('Вызов 3', currentQuestionIndex);
     } else {
         alert("Тест завершен!");
         // Логика завершения теста
     }
-    console.log('Вызов 4', currentQuestionIndex);
 }
 
 // Добавляем обработчики событий на кнопки
 document.addEventListener("DOMContentLoaded", () => {
     buttons.forEach((button, index) => {
         button.addEventListener('click', () => {
-            // Устанавливаем текущий индекс перед загрузкой вопроса
-            currentQuestionIndex = index;
             const questionId = button.getAttribute('data-question-id');
             fetchQuestion(questionId);
+
+            // Обновляем currentQuestionIndex в зависимости от выбранной кнопки
+            currentQuestionIndex = index;
         });
     });
 
